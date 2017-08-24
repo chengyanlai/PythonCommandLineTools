@@ -27,13 +27,43 @@ def ReplaceText(fileName, textToSearch, textToReplace):
                    for line in currentFile:
                        print(line.replace(textToSearch, textToReplace), end='')
 
+def checkIfRunningPBS():
+    f = open("job", "r")
+    for line in f:
+        text = re.search("(.*)(-N)(.*)", line)
+        if text:
+            jobName = text.groups()[2]
+    f.close()
+    if jobName:
+        qme = subprocess.run(["qstat", "-r"], stdout=subprocess.PIPE).stdout.decode("utf-8").split("\n")
+        for line in qme:
+            if jobName in line:
+                return True
+    return False
 
-def checkIfRunning():
+def resubmitPBS(action="show"):
+    folder_list = [f for f in os.listdir() if os.path.isdir(f)]
+    for folder in folder_list:
+        with cd(folder):
+            if os.path.isfile("DONE"):
+                continue
+            else:
+                if action == "qsub":
+                    if checkIfRunningPBS():
+                       command = "pwd;echo \' is running or queuing\'"
+                    else:
+                       command = "pwd?"#"qsub -q std.q job;sleep 1"
+                else:
+                    command = "pwd"
+                subprocess.call(command, shell=True)
+
+def checkIfRunningSlurm():
     f = open("job", "r")
     for line in f:
         text = re.search("(.*)(--job-name=)(.*)", line)
         if text:
             jobName = text.groups()[2]
+            break
     f.close()
     if jobName:
         # Get squeue results
@@ -44,7 +74,7 @@ def checkIfRunning():
                 return True
     return False
 
-def resubmit(action="show"):
+def resubmitSlurm(action="show"):
     folder_list = [f for f in os.listdir() if os.path.isdir(f)]
     for folder in folder_list:
         with cd(folder):
@@ -52,7 +82,7 @@ def resubmit(action="show"):
                 continue
             else:
                 if action == "qsub":
-                    if checkIfRunning():
+                    if checkIfRunningSlurm():
                        command = "pwd;echo \' is running or queuing\'"
                     else:
                        command = "sbatch --qos=long job;sleep 1"
@@ -79,7 +109,8 @@ if __name__ == "__main__":
         assert len(sys.argv) == 5, print("Too less arguments")
         ReplaceText(sys.argv[2], sys.argv[3], sys.argv[4])
     elif sys.argv[1] == "--resubmit" or sys.argv[1] == "-rs":
-        if len(sys.argv) < 3:
-            resubmit()
-        else:
-            resubmit(sys.argv[2])
+        assert len(sys.argv) == 4, print("Too less arguments")
+        if sys.argv[2] == "slurm":
+            resubmitSlurm(sys.argv[3])
+        elif sys.argv[2] == "pbs":
+            resubmitPBS(sys.argv[3])

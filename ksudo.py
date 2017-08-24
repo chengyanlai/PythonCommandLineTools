@@ -53,7 +53,7 @@ def resubmitPBS(action="show"):
                     if checkIfRunningPBS():
                        command = "pwd;echo \' is running or queuing\'"
                     else:
-                       command = "pwd?"#"qsub -q std.q job;sleep 1"
+                       command = "qsub -q std.q job;sleep 1"
                 else:
                     command = "pwd"
                 subprocess.call(command, shell=True)

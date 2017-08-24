@@ -98,7 +98,7 @@ if __name__ == "__main__":
                                      description="My Description. And what a lovely description it is.",
                                      epilog="All's well that ends well.")
     parser.add_argument('-rt', '--ReplaceText', nargs=3, metavar=('filename', 'textToSearch', 'textToReplace'), type=str, default=['job', 'standard', 'standard'], help='Replace textToSearch to textToReplace in file.')#, dest='cmd', action='store_const', const=test)
-    parser.add_argument('-rs', '--resubmit', metavar=('qsub'), nargs=1, type=str, default='show', help='Resubmit jobs to queue.')
+    parser.add_argument('-rs', '--resubmit', metavar=('pbs', 'qsub'), nargs=2, type=str, default=['pbs', 'show'], help='Resubmit jobs to queue.')
     # parser.add_argument('bar', nargs='*', default=[1, 2, 3], help='BAR!')
     parsed_args = parser.parse_args()
     # if parsed_args.action is None:

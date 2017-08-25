@@ -42,7 +42,7 @@ def checkIfRunningPBS():
                 return True
     return False
 
-def resubmitPBS(action="show"):
+def resubmitPBS(action="show", queue="std.q"):
     folder_list = [f for f in os.listdir() if os.path.isdir(f)]
     for folder in folder_list:
         with cd(folder):
@@ -53,7 +53,7 @@ def resubmitPBS(action="show"):
                     if checkIfRunningPBS():
                        command = "pwd;echo \' is running or queuing\'"
                     else:
-                       command = "qsub -q std.q job;sleep 1"
+                       command = "qsub -q " + queue + " job;sleep 1"
                 else:
                     command = "pwd"
                 subprocess.call(command, shell=True)
@@ -75,7 +75,7 @@ def checkIfRunningSlurm():
                 return True
     return False
 
-def resubmitSlurm(action="show"):
+def resubmitSlurm(action="show", queue="standard"):
     folder_list = [f for f in os.listdir() if os.path.isdir(f)]
     for folder in folder_list:
         with cd(folder):
@@ -86,7 +86,7 @@ def resubmitSlurm(action="show"):
                     if checkIfRunningSlurm():
                        command = "pwd;echo \' is running or queuing\'"
                     else:
-                       command = "sbatch --qos=long job;sleep 1"
+                       command = "sbatch --qos=" + queue + " job;sleep 1"
                 else:
                     command = "pwd"
                 subprocess.call(command, shell=True)
@@ -99,7 +99,7 @@ if __name__ == "__main__":
                                      description="My Description. And what a lovely description it is.",
                                      epilog="All's well that ends well.")
     parser.add_argument('-rt', '--ReplaceText', nargs=3, metavar=('filename', 'textToSearch', 'textToReplace'), type=str, default=['job', 'standard', 'standard'], help='Replace textToSearch to textToReplace in file.')#, dest='cmd', action='store_const', const=test)
-    parser.add_argument('-rs', '--resubmit', metavar=('pbs', 'qsub'), nargs=2, type=str, default=['pbs', 'show'], help='Resubmit jobs to queue.')
+    parser.add_argument('-rs', '--resubmit', metavar=('pbs', 'qsub', 'std.q'), nargs=3, type=str, default=['pbs', 'show', "std.q"], help='Resubmit jobs to queue.')
     # parser.add_argument('bar', nargs='*', default=[1, 2, 3], help='BAR!')
     parsed_args = parser.parse_args()
     # if parsed_args.action is None:
@@ -110,8 +110,8 @@ if __name__ == "__main__":
         assert len(sys.argv) == 5, print("Too less arguments")
         ReplaceText(sys.argv[2], sys.argv[3], sys.argv[4])
     elif sys.argv[1] == "--resubmit" or sys.argv[1] == "-rs":
-        assert len(sys.argv) == 4, print("Too less arguments")
+        assert len(sys.argv) == 5, print("Too less arguments")
         if sys.argv[2] == "slurm":
-            resubmitSlurm(sys.argv[3])
+            resubmitSlurm(sys.argv[3], sys.argv[4])
         elif sys.argv[2] == "pbs":
-            resubmitPBS(sys.argv[3])
+            resubmitPBS(sys.argv[3], sys.argv[4])

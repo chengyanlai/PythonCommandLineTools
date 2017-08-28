@@ -97,24 +97,23 @@ if __name__ == "__main__":
                                      description="My Description. And what a lovely description it is.",
                                      epilog="All's well that ends well.")
     parser.add_argument('-rt', '--ReplaceText', nargs=3, metavar=('filename', 'textToSearch', 'textToReplace'), type=str, default=['job', 'standard', 'standard'], help='Replace textToSearch to textToReplace in file.')#, dest='cmd', action='store_const', const=test)
-    parser.add_argument('-rs', '--resubmit', metavar=('pbs', 'show'), nargs='2', type=str, default=['pbs', 'show'], help='Resubmit jobs to queue.')
+    parser.add_argument('-rs', '--resubmit', metavar=['pbs', 'show', 'std.q'], nargs="+", type=str, default=['pbs', 'show', 'std.q'], help='Resubmit jobs to queue.')
     # parser.add_argument('bar', nargs='*', default=[1, 2, 3], help='BAR!')
     parsed_args = parser.parse_args()
-    # if parsed_args.action is None:
-        # parser.parse_args(['-h'])
-    # parsed_args.action(parsed_args)
-    # print(parsed_args)
     if sys.argv[1] == "--ReplaceText" or sys.argv[1] == "-rt":
         assert len(sys.argv) == 5, print("Too less arguments")
         ReplaceText(sys.argv[2], sys.argv[3], sys.argv[4])
     elif sys.argv[1] == "--resubmit" or sys.argv[1] == "-rs":
-        assert len(sys.argv) < 3, print("Too less arguments")
+        assert len(sys.argv) > 2, print("Too less arguments")
         if len(sys.argv) < 4:
           action = "show"
           queue = "std.q"
         else:
           action = sys.argv[3]
-          queue = sys.argv[4]
+          if len(sys.argv) < 5:
+              queue = "std.q"
+          else:
+              queue = sys.argv[4]
         if sys.argv[2] == "slurm":
             resubmitSlurm(action=action, queue=queue)
         elif sys.argv[2] == "pbs":

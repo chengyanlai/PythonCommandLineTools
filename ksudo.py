@@ -49,13 +49,12 @@ def resubmitPBS(action="show", queue="std.q"):
             if os.path.isfile("DONE"):
                 continue
             else:
-                if action == "qsub":
-                    if checkIfRunningPBS():
-                       command = "pwd;echo \' is running or queuing\'"
-                    else:
-                       command = "qsub -q " + queue + " job;sleep 1"
-                else:
-                    command = "pwd"
+                if checkIfRunningPBS():
+                    command = "echo $(pwd)\' is running or queuing\'"
+                elif action == "show"
+                    command = "echo $(pwd)\' will be submmitted\'"
+                elif action == "qsub":
+                    command = "qsub -q " + queue + " job;sleep 1"
                 subprocess.call(command, shell=True)
 
 def checkIfRunningSlurm():
@@ -82,13 +81,12 @@ def resubmitSlurm(action="show", queue="standard"):
             if os.path.isfile("DONE"):
                 continue
             else:
-                if action == "qsub":
-                    if checkIfRunningSlurm():
-                       command = "pwd;echo \' is running or queuing\'"
-                    else:
-                       command = "sbatch --qos=" + queue + " job;sleep 1"
-                else:
-                    command = "pwd"
+                if checkIfRunningSlurm():
+                    command = "echo $(pwd)\' is running or queuing\'"
+                elif action == "show"
+                    command = "echo $(pwd)\' will be submmitted\'"
+                elif action == "qsub":
+                    command = "sbatch --qos=" + queue + " job;sleep 1"
                 subprocess.call(command, shell=True)
 
 def test(parsed_args):

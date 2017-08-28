@@ -108,8 +108,9 @@ if __name__ == "__main__":
         assert len(sys.argv) == 5, print("Too less arguments")
         ReplaceText(sys.argv[2], sys.argv[3], sys.argv[4])
     elif sys.argv[1] == "--resubmit" or sys.argv[1] == "-rs":
-        assert len(sys.argv) == 5, print("Too less arguments")
+        assert len(sys.argv) < 3, print("Too less arguments")
+        print(parsed_args)
         if sys.argv[2] == "slurm":
-            resubmitSlurm(sys.argv[3], sys.argv[4])
+            resubmitSlurm(action=action, queue=queue)
         elif sys.argv[2] == "pbs":
-            resubmitPBS(sys.argv[3], sys.argv[4])
+            resubmitPBS(action=action, queue=queue)

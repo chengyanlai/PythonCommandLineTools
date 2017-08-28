@@ -118,3 +118,5 @@ if __name__ == "__main__":
             resubmitSlurm(action=action, queue=queue)
         elif sys.argv[2] == "pbs":
             resubmitPBS(action=action, queue=queue)
+        else:
+            print("Supportive queuing systems - slurm, pbs.")

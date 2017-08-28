@@ -51,7 +51,7 @@ def resubmitPBS(action="show", queue="std.q"):
             else:
                 if checkIfRunningPBS():
                     command = "echo $(pwd)\' is running or queuing\'"
-                elif action == "show"
+                elif action == "show":
                     command = "echo $(pwd)\' will be submmitted\'"
                 elif action == "qsub":
                     command = "qsub -q " + queue + " job;sleep 1"
@@ -83,7 +83,7 @@ def resubmitSlurm(action="show", queue="standard"):
             else:
                 if checkIfRunningSlurm():
                     command = "echo $(pwd)\' is running or queuing\'"
-                elif action == "show"
+                elif action == "show":
                     command = "echo $(pwd)\' will be submmitted\'"
                 elif action == "qsub":
                     command = "sbatch --qos=" + queue + " job;sleep 1"

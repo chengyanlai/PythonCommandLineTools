@@ -42,9 +42,6 @@ def checkIfRunningTorque():
                 return True
     return False
 
-def resubmitTorque(action="show", queue="std.q"):
-    resubmitPBS(action=action, queue=queue)
-
 def checkIfRunningPBS():
     f = open("job", "r")
     for line in f:
@@ -55,23 +52,24 @@ def checkIfRunningPBS():
     if jobName:
         qme = subprocess.run(["qstat", "-f"], stdout=subprocess.PIPE).stdout.decode("utf-8").split("\n")
         for line in qme:
-            if jobName in line:
+            text = re.search("(.*)(Job_Name)(.*)", line)
+            if text and jobName == text.groups()[2]:
                 return True
     return False
 
-def resubmitPBS(action="show", queue="batch"):
+def resubmitPBS(CheckFunction, action="show", queue="standard"):
     folder_list = [f for f in os.listdir() if os.path.isdir(f)]
     for folder in folder_list:
         with cd(folder):
             if os.path.isfile("DONE"):
                 continue
             else:
-                if checkIfRunningPBS():
+                if CheckFunction:
                     command = "echo $(pwd)\' is running or queuing\'"
                 elif action == "show":
                     command = "echo $(pwd)\' will be submmitted\'"
                 elif action == "qsub":
-                    command = "qsub -q " + queue + " job;sleep 1"
+                    command = "sbatch --qos=" + queue + " job;sleep 1"
                 subprocess.call(command, shell=True)
 
 def checkIfRunningSlurm():
@@ -106,24 +104,6 @@ def resubmitSlurm(action="show", queue="standard"):
                     command = "sbatch --qos=" + queue + " job;sleep 1"
                 subprocess.call(command, shell=True)
 
-def resubmit(CheckFunction, action="show", queue="standard"):
-    folder_list = [f for f in os.listdir() if os.path.isdir(f)]
-    for folder in folder_list:
-        with cd(folder):
-            if os.path.isfile("DONE"):
-                continue
-            else:
-                if CheckFunction:
-                    command = "echo $(pwd)\' is running or queuing\'"
-                elif action == "show":
-                    command = "echo $(pwd)\' will be submmitted\'"
-                elif action == "qsub":
-                    command = "sbatch --qos=" + queue + " job;sleep 1"
-                subprocess.call(command, shell=True)
-
-def test(parsed_args):
-    print(parsed_args)
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="ksudo", usage='%(prog)s [options]',
                                      description="My Description. And what a lovely description it is.",
@@ -149,6 +129,8 @@ if __name__ == "__main__":
         if sys.argv[2] == "slurm":
             resubmitSlurm(action=action, queue=queue)
         elif sys.argv[2] == "pbs":
-            resubmit(checkIfRunningPBS, action=action, queue=queue)
+            resubmitPBS(checkIfRunningPBS, action=action, queue=queue)
+        elif sys.argv[2] == "torque":
+            resubmitPBS(checkIfRunningTorque, action=action, queue=queue)
         else:
             print("Supportive queuing systems - slurm, pbs.")

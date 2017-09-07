@@ -45,16 +45,23 @@ def checkIfRunningTorque():
 def checkIfRunningPBS():
     f = open("job", "r")
     for line in f:
-        text = re.search("(.*)(-N)(.*)", line)
+        text = re.search("(.*)(-N )(.*)", line)
         if text:
             jobName = text.groups()[2]
     f.close()
     if jobName:
         qme = subprocess.run(["qstat", "-f"], stdout=subprocess.PIPE).stdout.decode("utf-8").split("\n")
+        Queue = []
         for line in qme:
-            text = re.search("(.*)(Job_Name)(.*)", line)
-            if text and jobName == text.groups()[2]:
-                return True
+            text2 = re.search("(.*)(Job_Name = )(.*)", line)
+            try:
+                Queue.append(text2.groups()[2])
+            except AttributeError:
+                pass
+            except:
+                raise
+        if any(jobName in s for s in Queue):
+            return True
     return False
 
 def resubmitPBS(CheckFunction, action="show", queue="standard"):
@@ -64,7 +71,7 @@ def resubmitPBS(CheckFunction, action="show", queue="standard"):
             if os.path.isfile("DONE"):
                 continue
             else:
-                if CheckFunction:
+                if CheckFunction():
                     command = "echo $(pwd)\' is running or queuing\'"
                 elif action == "show":
                     command = "echo $(pwd)\' will be submmitted\'"

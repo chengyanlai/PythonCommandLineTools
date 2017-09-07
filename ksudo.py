@@ -28,7 +28,7 @@ def ReplaceText(fileName, textToSearch, textToReplace):
                    for line in currentFile:
                        print(line.replace(textToSearch, textToReplace), end='')
 
-def checkIfRunningPBS():
+def checkIfRunningTorque():
     f = open("job", "r")
     for line in f:
         text = re.search("(.*)(-N)(.*)", line)
@@ -42,7 +42,24 @@ def checkIfRunningPBS():
                 return True
     return False
 
-def resubmitPBS(action="show", queue="std.q"):
+def resubmitTorque(action="show", queue="std.q"):
+    resubmitPBS(action=action, queue=queue)
+
+def checkIfRunningPBS():
+    f = open("job", "r")
+    for line in f:
+        text = re.search("(.*)(-N)(.*)", line)
+        if text:
+            jobName = text.groups()[2]
+    f.close()
+    if jobName:
+        qme = subprocess.run(["qstat", "-f"], stdout=subprocess.PIPE).stdout.decode("utf-8").split("\n")
+        for line in qme:
+            if jobName in line:
+                return True
+    return False
+
+def resubmitPBS(action="show", queue="batch"):
     folder_list = [f for f in os.listdir() if os.path.isdir(f)]
     for folder in folder_list:
         with cd(folder):
@@ -89,6 +106,21 @@ def resubmitSlurm(action="show", queue="standard"):
                     command = "sbatch --qos=" + queue + " job;sleep 1"
                 subprocess.call(command, shell=True)
 
+def resubmit(CheckFunction, action="show", queue="standard"):
+    folder_list = [f for f in os.listdir() if os.path.isdir(f)]
+    for folder in folder_list:
+        with cd(folder):
+            if os.path.isfile("DONE"):
+                continue
+            else:
+                if CheckFunction:
+                    command = "echo $(pwd)\' is running or queuing\'"
+                elif action == "show":
+                    command = "echo $(pwd)\' will be submmitted\'"
+                elif action == "qsub":
+                    command = "sbatch --qos=" + queue + " job;sleep 1"
+                subprocess.call(command, shell=True)
+
 def test(parsed_args):
     print(parsed_args)
 
@@ -117,6 +149,6 @@ if __name__ == "__main__":
         if sys.argv[2] == "slurm":
             resubmitSlurm(action=action, queue=queue)
         elif sys.argv[2] == "pbs":
-            resubmitPBS(action=action, queue=queue)
+            resubmit(checkIfRunningPBS, action=action, queue=queue)
         else:
             print("Supportive queuing systems - slurm, pbs.")

@@ -35,7 +35,7 @@ def getQueueing(queueSystem="torque"):
         for line in qme:
             text = re.search("(.*)(Full jobname:)(.*)", line)
             try:
-                queue.append(text2.groups()[2].strip())
+                queue.append(text.groups()[2].strip())
             except AttributeError:
                 pass
             except:
@@ -45,7 +45,7 @@ def getQueueing(queueSystem="torque"):
         for line in qme:
             text = re.search("(.*)(Job_Name =)(.*)", line)
             try:
-                queue.append(text2.groups()[2].strip())
+                queue.append(text.groups()[2].strip())
             except AttributeError:
                 pass
             except:

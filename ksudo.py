@@ -28,88 +28,71 @@ def ReplaceText(fileName, textToSearch, textToReplace):
                    for line in currentFile:
                        print(line.replace(textToSearch, textToReplace), end='')
 
-def checkIfRunningTorque():
-    f = open("job", "r")
-    for line in f:
-        text = re.search("(.*)(-N)(.*)", line)
-        if text:
-            jobName = text.groups()[2]
-    f.close()
-    if jobName:
+def getQueueing(queueSystem="torque"):
+    queue = []
+    if queueSystem == "torque":
         qme = subprocess.run(["qstat", "-r"], stdout=subprocess.PIPE).stdout.decode("utf-8").split("\n")
         for line in qme:
-            if jobName in line:
-                return True
-    return False
-
-def checkIfRunningPBS():
-    f = open("job", "r")
-    for line in f:
-        text = re.search("(.*)(-N )(.*)", line)
-        if text:
-            jobName = text.groups()[2]
-    f.close()
-    if jobName:
-        qme = subprocess.run(["qstat", "-f"], stdout=subprocess.PIPE).stdout.decode("utf-8").split("\n")
-        Queue = []
-        for line in qme:
-            text2 = re.search("(.*)(Job_Name = )(.*)", line)
+            text = re.search("(.*)(Full jobname:)(.*)", line)
             try:
-                Queue.append(text2.groups()[2])
+                queue.append(text2.groups()[2].strip())
             except AttributeError:
                 pass
             except:
                 raise
-        if any(jobName in s for s in Queue):
-            return True
-    return False
-
-def resubmitPBS(CheckFunction, action="show", queue="standard"):
-    folder_list = [f for f in os.listdir() if os.path.isdir(f)]
-    for folder in folder_list:
-        with cd(folder):
-            if os.path.isfile("DONE"):
-                continue
-            else:
-                if CheckFunction():
-                    command = "echo $(pwd)\' is running or queuing\'"
-                elif action == "show":
-                    command = "echo $(pwd)\' will be submmitted\'"
-                elif action == "qsub":
-                    command = "sbatch --qos=" + queue + " job;sleep 1"
-                subprocess.call(command, shell=True)
-
-def checkIfRunningSlurm():
-    f = open("job", "r")
-    for line in f:
-        text = re.search("(.*)(--job-name=)(.*)", line)
-        if text:
-            jobName = text.groups()[2]
-            break
-    f.close()
-    if jobName:
-        # Get squeue results
-        qme = subprocess.run(['squeue', '-u', 'chengyanlai', '-o', '"%.10i %.9P %.30j %.15u %.2t %.13M %.9l %.6D %R"'], stdout=subprocess.PIPE).stdout.decode("utf-8").split("\n")
-        # Search jobName
+    elif queueSystem == "pbs":
+        qme = subprocess.run(["qstat", "-f"], stdout=subprocess.PIPE).stdout.decode("utf-8").split("\n")
         for line in qme:
-            if jobName in line:
-                return True
-    return False
+            text = re.search("(.*)(Job_Name =)(.*)", line)
+            try:
+                queue.append(text2.groups()[2].strip())
+            except AttributeError:
+                pass
+            except:
+                raise
+    elif queueSystem == "slurm":
+        qme = subprocess.run(['squeue', '-u', 'chengyanlai', '-o', '"%.10i %.9P %.30j %.15u %.2t %.13M %.9l %.6D %R"'], stdout=subprocess.PIPE).stdout.decode("utf-8").split("\n")
+        for line in qme:
+            print(line)
+    return queue
 
-def resubmitSlurm(action="show", queue="standard"):
+def getJobName(filename="job"):
+    f = open(filename, "r")
+    for line in f:
+        text1 = re.search("(.*)(-N)(.*)", line)
+        text2 = re.search("(.*)(--job-name=)(.*)", line)
+        if text1:
+            return text1.groups()[2].strip()
+        elif text2:
+            return text2.groups()[2].strip()
+    f.close()
+    print("No jobName found in file ", filename)
+    return NULL
+
+def resubmit(queueSystem, action="show", queue="standard"):
+    # get all running and queuing
+    Queue = getQueueing(queueSystem=queueSystem)
     folder_list = [f for f in os.listdir() if os.path.isdir(f)]
     for folder in folder_list:
         with cd(folder):
             if os.path.isfile("DONE"):
                 continue
             else:
-                if checkIfRunningSlurm():
-                    command = "echo $(pwd)\' is running or queuing\'"
+                jobName = getJobName()
+                if any(jobName in s for s in Queue):
+                    print(jobName + " is running or queuing.")
                 elif action == "show":
-                    command = "echo $(pwd)\' will be submmitted\'"
-                elif action == "qsub":
-                    command = "sbatch --qos=" + queue + " job;sleep 1"
-                subprocess.call(command, shell=True)
+                    print(jobName + " is not running and not finished.")
+                else:
+                    if queueSystem == "torque" or  queueSystem == "pbs":
+                        qsubCommand = "qsub -q "
+                    elif queueSystem == "slurm":
+                        qsubCommand = "sbatch --qos="
+                    else:
+                        print("the queueing system is not supported!")
+                        continue
+                    command = qsubCommand + queue + " job;sleep 1"
+                    subprocess.call(command, shell=True)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="ksudo", usage='%(prog)s [options]',
@@ -133,11 +116,4 @@ if __name__ == "__main__":
               queue = "std.q"
           else:
               queue = sys.argv[4]
-        if sys.argv[2] == "slurm":
-            resubmitSlurm(action=action, queue=queue)
-        elif sys.argv[2] == "pbs":
-            resubmitPBS(checkIfRunningPBS, action=action, queue=queue)
-        elif sys.argv[2] == "torque":
-            resubmitPBS(checkIfRunningTorque, action=action, queue=queue)
-        else:
-            print("Supportive queuing systems - slurm, pbs.")
+        resubmit(sys.argv[2], action=action, queue=queue)

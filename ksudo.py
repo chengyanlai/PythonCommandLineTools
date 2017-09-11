@@ -76,6 +76,7 @@ def resubmit(queueSystem, action="show", queue="standard"):
     for folder in folder_list:
         with cd(folder):
             if os.path.isfile("DONE"):
+                print(folder + " is DONE.")
                 continue
             else:
                 jobName = getJobName()

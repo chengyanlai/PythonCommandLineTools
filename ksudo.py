@@ -6,6 +6,7 @@ import subprocess
 import fileinput
 import re
 import argparse
+import glob
 
 class cd:
     """Context manager for changing the current working directory"""
@@ -75,7 +76,8 @@ def resubmit(queueSystem, action="show", queue="standard"):
     folder_list = [f for f in os.listdir() if os.path.isdir(f)]
     for folder in folder_list:
         with cd(folder):
-            if os.path.isfile("DONE"):
+            if len(glob.glob("DONE*")):
+            # if os.path.isfile("DONE") or os.path.isfile("DONE.eqm") or os.path.isfile("DONE.xas") or os.path.isfile("DONE.pump"):
                 print(folder + " is DONE.")
                 continue
             else:

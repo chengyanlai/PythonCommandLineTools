@@ -58,7 +58,15 @@ def getQueueing(queueSystem="torque"):
     return queue
 
 def getJobName(filename="job"):
-    f = open(filename, "r")
+    try:
+        f = open(filename, "r")
+    except FileNotFoundError:
+        try:
+            f = open(filename + ".mpi", "r")
+        except:
+            raise
+    except:
+        raise
     for line in f:
         text1 = re.search("(.*)(-N)(.*)", line)
         text2 = re.search("(.*)(--job-name=)(.*)", line)

@@ -7,6 +7,7 @@ import fileinput
 import re
 import argparse
 import glob
+import getopt
 
 class cd:
     """Context manager for changing the current working directory"""
@@ -20,10 +21,10 @@ class cd:
     def __exit__(self, etype, value, traceback):
         os.chdir(self.savedPath)
 
-def ReplaceText(fileName, textToSearch, textToReplace):
+def ReplaceText(filename, textToSearch, textToReplace):
     for root, dirs, files in os.walk('.'):
         for file in files:
-            if file == fileName:
+            if file == filename:
                fileToSearch = os.path.join(root, file)
                with fileinput.FileInput(fileToSearch, inplace=True, backup='.bak') as currentFile:
                    for line in currentFile:
@@ -60,11 +61,6 @@ def getQueueing(queueSystem="torque"):
 def getJobName(filename="job"):
     try:
         f = open(filename, "r")
-    except FileNotFoundError:
-        try:
-            f = open(filename + ".mpi", "r")
-        except:
-            raise
     except:
         raise
     for line in f:
@@ -78,53 +74,49 @@ def getJobName(filename="job"):
     print("No jobName found in file ", filename)
     return NULL
 
-def resubmit(queueSystem, action="show", queue="standard"):
-    # get all running and queuing
+def getFolders(pattern=""):
+    if pattern:
+        return [f for f in glob.glob(pattern) if os.path.isdir(f)]
+    else:
+        return [f for f in os.listdir() if os.path.isdir(f)]
+
+def SubmitQueue(filename, queueSystem, queueName, pattern=""):
+    # Default stuff
+    qsubCommand = {"torque": "qsub -q", "pbs": "qsub -q", "slurm": "sbatch --qos="}
+    # Get all running and queuing
     Queue = getQueueing(queueSystem=queueSystem)
-    folder_list = [f for f in os.listdir() if os.path.isdir(f)]
+    folder_list = getFolders(pattern)
     for folder in folder_list:
         with cd(folder):
             if len(glob.glob("DONE*")):
-            # if os.path.isfile("DONE") or os.path.isfile("DONE.eqm") or os.path.isfile("DONE.xas") or os.path.isfile("DONE.pump"):
                 print(folder + " is DONE.")
                 continue
             else:
-                jobName = getJobName()
+                jobName = getJobName(filename)
                 if any(jobName in s for s in Queue):
                     print(jobName + " is running or queuing.")
-                elif action == "show":
-                    print(jobName + " is not running and not finished.")
                 else:
-                    if queueSystem == "torque" or  queueSystem == "pbs":
-                        qsubCommand = "qsub -q "
-                    elif queueSystem == "slurm":
-                        qsubCommand = "sbatch --qos="
+                    if queueName:
+                        command = qsubCommand[queueSystem] + queue + " " + fileName + ";sleep 1"
+                        subprocess.call(command, shell=True)
                     else:
-                        print("the queueing system is not supported!")
-                        continue
-                    command = qsubCommand + queue + " job;sleep 1"
-                    subprocess.call(command, shell=True)
+                        print(jobName + " is not running and not finished.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="ksudo", usage='%(prog)s [options]',
-                                     description="My Description. And what a lovely description it is.",
+                                     description="Chenyen's personal command to make life easier.",
                                      epilog="All's well that ends well.")
-    parser.add_argument('-rt', '--ReplaceText', nargs=3, metavar=('filename', 'textToSearch', 'textToReplace'), type=str, default=['job', 'standard', 'standard'], help='Replace textToSearch to textToReplace in file.')#, dest='cmd', action='store_const', const=test)
-    parser.add_argument('-rs', '--resubmit', metavar=['pbs', 'show', 'std.q'], nargs="+", type=str, default=['pbs', 'show', 'std.q'], help='Resubmit jobs to queue.')
-    # parser.add_argument('bar', nargs='*', default=[1, 2, 3], help='BAR!')
-    parsed_args = parser.parse_args()
-    if sys.argv[1] == "--ReplaceText" or sys.argv[1] == "-rt":
-        assert len(sys.argv) == 5, print("Too less arguments")
-        ReplaceText(sys.argv[2], sys.argv[3], sys.argv[4])
-    elif sys.argv[1] == "--resubmit" or sys.argv[1] == "-rs":
-        assert len(sys.argv) > 2, print("Too less arguments")
-        if len(sys.argv) < 4:
-          action = "show"
-          queue = "std.q"
-        else:
-          action = sys.argv[3]
-          if len(sys.argv) < 5:
-              queue = "std.q"
-          else:
-              queue = sys.argv[4]
-        resubmit(sys.argv[2], action=action, queue=queue)
+    parser.add_argument('-a', '--action', metavar='action', type=str, default="sj", choices=['sj', 'rt'], required=True, help='Choose to do submit job (sj) or replace text (rt)')
+    # parser.add_argument('-d', '--dry-run', metavar='dry', type=bool, default=False, help='Dry-run. Do nothing.')
+    # For replace text
+    parser.add_argument('-s', '--search', metavar='TextToSearch', type=str, default="", help='If action=rt, search this text.')
+    parser.add_argument('-r', '--replace', metavar='TextToReplace', type=str, help='If action=rt, replace TextToSearch to this text.')
+    # For submit job
+    parser.add_argument('-qs', '--queue-system', metavar='queue-system', type=str, default='torque', choices=['slurm', 'pbs', 'torque'], help='Set the queueing system.')
+    parser.add_argument('-qn', '--queue-name', metavar='queue-name', type=str, help='Set the queue name.')
+    parser.add_argument('file', default='job', help='It is either the job script to submit or the file to search and replace text.')
+    args = vars(parser.parse_args())
+    if args["action"] == "rt":
+        ReplaceText(filename=args["file"], textToSearch=args["search"], textToReplace=args["replace"])
+    elif args["action"] == "sj":
+        SubmitQueue(filename=args["file"], queueSystem=args["queue_system"], queueName=args["queue_name"], pattern=args["search"])

@@ -82,7 +82,7 @@ def getFolders(pattern=""):
 
 def SubmitQueue(filename, queueSystem, queueName, pattern=""):
     # Default stuff
-    qsubCommand = {"torque": "qsub -q", "pbs": "qsub -q", "slurm": "sbatch --qos="}
+    qsubCommand = {"torque": "qsub -q ", "pbs": "qsub -q ", "slurm": "sbatch --qos="}
     # Get all running and queuing
     Queue = getQueueing(queueSystem=queueSystem)
     folder_list = getFolders(pattern)

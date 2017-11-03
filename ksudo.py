@@ -97,13 +97,13 @@ def SubmitQueue(filename, queueSystem, queueName, pattern=""):
                     print(jobName + " is running or queuing.")
                 else:
                     if queueName:
-                        command = qsubCommand[queueSystem] + queue + " " + fileName + ";sleep 1"
+                        command = qsubCommand[queueSystem] + queueName + " " + filename + ";sleep 1"
                         subprocess.call(command, shell=True)
                     else:
                         print(jobName + " is not running and not finished.")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(prog="ksudo", usage='%(prog)s [options]',
+    parser = argparse.ArgumentParser(prog="ksudo", usage='%(prog)s [options] file',
                                      description="Chenyen's personal command to make life easier.",
                                      epilog="All's well that ends well.")
     parser.add_argument('-a', '--action', metavar='action', type=str, default="sj", choices=['sj', 'rt'], required=True, help='Choose to do submit job (sj) or replace text (rt)')

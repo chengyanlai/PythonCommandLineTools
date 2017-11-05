@@ -106,13 +106,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="ksudo", usage='%(prog)s [options] file',
                                      description="Chenyen's personal command to make life easier.",
                                      epilog="All's well that ends well.")
-    parser.add_argument('-a', '--action', metavar='action', type=str, default="sj", choices=['sj', 'rt'], required=True, help='Choose to do submit job (sj) or replace text (rt)')
-    # parser.add_argument('-d', '--dry-run', metavar='dry', type=bool, default=False, help='Dry-run. Do nothing.')
+    parser.add_argument('-a', '--action', metavar='action', type=str, default="sj", choices=['sj', 'rt'], required=True, help='Choose to do submit job (sj) or replace text (rt).')
     # For replace text
     parser.add_argument('-s', '--search', metavar='TextToSearch', type=str, default="", help='If action=rt, search this text.')
     parser.add_argument('-r', '--replace', metavar='TextToReplace', type=str, help='If action=rt, replace TextToSearch to this text.')
     # For submit job
-    parser.add_argument('-qs', '--queue-system', metavar='queue-system', type=str, default='torque', choices=['slurm', 'pbs', 'torque'], help='Set the queueing system.')
+    parser.add_argument('-qs', '--queue-system', metavar='queue-system', type=str, default='torque', choices=['slurm', 'pbs', 'torque'], help='Set the queueing system. Default: torque.')
     parser.add_argument('-qn', '--queue-name', metavar='queue-name', type=str, help='Set the queue name.')
     parser.add_argument('file', default='job', help='It is either the job script to submit or the file to search and replace text.')
     args = vars(parser.parse_args())

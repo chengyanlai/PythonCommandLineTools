@@ -64,7 +64,7 @@ def getJobName(filename="job"):
     except:
         raise
     for line in f:
-        text1 = re.search("(.*)(-N)(.*)", line)
+        text1 = re.search("(.*)(-N )(.*)", line)
         text2 = re.search("(.*)(--job-name=)(.*)", line)
         if text1:
             return text1.groups()[2].strip()

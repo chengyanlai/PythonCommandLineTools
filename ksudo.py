@@ -62,7 +62,7 @@ def getJobName(filename="job"):
     try:
         f = open(filename, "r")
     except FileNotFoundError:
-        return NULL
+        return ""
     except:
         raise
     for line in f:
@@ -74,7 +74,7 @@ def getJobName(filename="job"):
             return text2.groups()[2].strip()
     f.close()
     print("No jobName found in file ", filename)
-    return NULL
+    return ""
 
 def getFolders(pattern=""):
     if pattern:

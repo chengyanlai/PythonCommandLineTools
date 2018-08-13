@@ -61,6 +61,8 @@ def getQueueing(queueSystem="torque"):
 def getJobName(filename="job"):
     try:
         f = open(filename, "r")
+    except FileNotFoundError:
+        return NULL
     except:
         raise
     for line in f:
@@ -96,7 +98,7 @@ def SubmitQueue(filename, queueSystem, queueName, pattern=""):
                 if any(jobName in s for s in Queue):
                     print(jobName + " is running or queuing.")
                 else:
-                    if queueName:
+                    if queueName and jobName:
                         command = qsubCommand[queueSystem] + queueName + " " + filename + ";sleep 1"
                         subprocess.call(command, shell=True)
                     else:

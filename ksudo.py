@@ -8,6 +8,7 @@ import re
 import argparse
 import glob
 import getopt
+import getpass
 
 class cd:
     """Context manager for changing the current working directory"""
@@ -53,7 +54,8 @@ def getQueueing(queueSystem="torque"):
             except:
                 raise
     elif queueSystem == "slurm":
-        qme = subprocess.run(['squeue', '-u', 'chengyanlai', '-o', '"%.15i %.9P %.30j %.15u %.2t %.13M %.9l %.6D %R"'], stdout=subprocess.PIPE).stdout.decode("utf-8").split("\n")
+        qme = subprocess.run(['squeue', '-u', getpass.getuser(), '-o', '"%.15i %.9P %.30j %.15u %.2t %.13M %.9l %.6D %R"'],
+        stdout=subprocess.PIPE).stdout.decode("utf-8").split("\n")
         for line in qme[1:(-1)]:
             queue.append(line.split()[3])
     return queue
@@ -82,7 +84,7 @@ def getFolders(pattern=""):
     else:
         return [f for f in os.listdir() if os.path.isdir(f)]
 
-def SubmitQueue(filename, queueSystem, queueName, pattern=""):
+def SubmitQueue(filename, queueSystem, queueArgs, pattern=""):
     # Default stuff
     qsubCommand = {"torque": "qsub -q ", "pbs": "qsub -q ", "slurm": "sbatch --qos="}
     # Get all running and queuing
@@ -98,8 +100,8 @@ def SubmitQueue(filename, queueSystem, queueName, pattern=""):
                 if any(jobName in s for s in Queue):
                     print(jobName + " is running or queuing.")
                 else:
-                    if queueName and jobName:
-                        command = qsubCommand[queueSystem] + queueName + " " + filename + ";sleep 1"
+                    if len(queueArgs) and jobName:
+                        command = qsubCommand[queueSystem] + " ".join(queueArgs) + " " + filename + ";sleep 1"
                         subprocess.call(command, shell=True)
                     else:
                         print(jobName + " is not running and not finished.")
@@ -114,10 +116,10 @@ if __name__ == "__main__":
     parser.add_argument('-r', '--replace', metavar='TextToReplace', type=str, help='If action=rt, replace TextToSearch to this text.')
     # For submit job
     parser.add_argument('-qs', '--queue-system', metavar='queue-system', type=str, default='torque', choices=['slurm', 'pbs', 'torque'], help='Set the queueing system. Default: torque.')
-    parser.add_argument('-qn', '--queue-name', metavar='queue-name', type=str, help='Set the queue name.')
+    parser.add_argument('-qa', '--queue-arguments', metavar='queue-arguments', nargs="+", type=str, default=[], help='Set the queue arguments.')
     parser.add_argument('file', default='job', help='It is either the job script to submit or the file to search and replace text.')
     args = vars(parser.parse_args())
     if args["action"] == "rt":
         ReplaceText(filename=args["file"], textToSearch=args["search"], textToReplace=args["replace"])
     elif args["action"] == "sj":
-        SubmitQueue(filename=args["file"], queueSystem=args["queue_system"], queueName=args["queue_name"], pattern=args["search"])
+        SubmitQueue(filename=args["file"], queueSystem=args["queue_system"], queueArgs=args["queue_arguments"], pattern=args["search"])

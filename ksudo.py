@@ -54,7 +54,7 @@ def getQueueing(queueSystem="torque"):
             except:
                 raise
     elif queueSystem == "slurm":
-        qme = subprocess.run(['squeue', '-u', getpass.getuser(), '-o', '"%.15i %.9P %.30j %.15u %.2t %.13M %.9l %.6D %R"'],
+        qme = subprocess.run(['squeue', '-u', getpass.getuser(), '-o', '"%.15i %.9P %.40j %.15u %.2t %.13M %.9l %.6D %R"'],
         stdout=subprocess.PIPE).stdout.decode("utf-8").split("\n")
         for line in qme[1:(-1)]:
             queue.append(line.split()[3])

@@ -87,6 +87,7 @@ def getFolders(pattern=""):
 def SubmitQueue(filename, queueSystem, queueArgs, pattern=""):
     # Default stuff
     qsubCommand = {"torque": "qsub", "pbs": "qsub", "slurm": "sbatch"}
+    qsubEscape = {"torque": "-", "pbs": "-", "slurm": "--"}
     # Get all running and queuing
     Queue = getQueueing(queueSystem=queueSystem)
     folder_list = getFolders(pattern)
@@ -101,14 +102,17 @@ def SubmitQueue(filename, queueSystem, queueArgs, pattern=""):
                     print(jobName + " is running or queuing.")
                 else:
                     if len(queueArgs) and jobName:
-                        command = qsubCommand[queueSystem] + " " + " ".join(queueArgs) + " " + filename + ";sleep 1"
+                        Args = ""
+                        for s in queueArgs:
+                            Args += qsubEscape[queueSystem] + s + " "
+                        command = qsubCommand[queueSystem] + " " + Args + filename + ";sleep 1"
                         # print(command)
                         subprocess.call(command, shell=True)
                     else:
                         print(jobName + " is not running and not finished.")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(prog="ksudo", usage='%(prog)s [options] file',
+    parser = argparse.ArgumentParser(prog="ksudo", usage='%(prog)s [options] -f file',
                                      description="Chenyen's personal command to make life easier.",
                                      epilog="All's well that ends well.")
     parser.add_argument('-a', '--action', metavar='action', type=str, default="sj", choices=['sj', 'rt'], required=True, help='Choose to do submit job (sj) or replace text (rt).')

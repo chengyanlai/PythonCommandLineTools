@@ -84,7 +84,7 @@ def getFolders(pattern=""):
     else:
         return [f for f in os.listdir() if os.path.isdir(f)]
 
-def SubmitQueue(filename, queueSystem, queueArgs, pattern=""):
+def SubmitQueue(filename, queueSystem, queueArgs, pattern="", search="DONE"):
     # Default stuff
     qsubCommand = {"torque": "qsub", "pbs": "qsub", "slurm": "sbatch"}
     qsubEscape = {"torque": "-", "pbs": "-", "slurm": "--"}
@@ -93,7 +93,7 @@ def SubmitQueue(filename, queueSystem, queueArgs, pattern=""):
     folder_list = getFolders(pattern)
     for folder in folder_list:
         with cd(folder):
-            if len(glob.glob("DONE*")):
+            if len(glob.glob(search)):
                 print(folder + " is DONE.")
                 continue
             else:
@@ -120,11 +120,13 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--search', metavar='TextToSearch', type=str, default="", help='If action=rt, search this text.')
     parser.add_argument('-r', '--replace', metavar='TextToReplace', type=str, help='If action=rt, replace TextToSearch to this text.')
     # For submit job
-    parser.add_argument('-qs', '--queue-system', metavar='queue-system', type=str, default='torque', choices=['slurm', 'pbs', 'torque'], help='Set the queueing system. Default: torque.')
+    parser.add_argument('-qs', '--queue-system', metavar='queue-system', type=str, default='slurm', choices=['slurm', 'pbs', 'torque'], help='Set the queueing system. Default: torque.')
     parser.add_argument('-qa', '--queue-arguments', metavar='queue-arguments', nargs="+", type=str, default=[], help='Set the queue arguments.')
+    parser.add_argument('-fs', '--folder-search', metavar='folder', type=str, default="", help='Folder pattern to search for submit.')
+    parser.add_argument('-ds', '--done-search', metavar='filename', type=str, default="DONE*", help='File pattern to search for finished job.')
     parser.add_argument('-f', '--file', default='job', help='It is either the job script to submit or the file to search and replace text.')
     args = vars(parser.parse_args())
     if args["action"] == "rt":
         ReplaceText(filename=args["file"], textToSearch=args["search"], textToReplace=args["replace"])
     elif args["action"] == "sj":
-        SubmitQueue(filename=args["file"], queueSystem=args["queue_system"], queueArgs=args["queue_arguments"], pattern=args["search"])
+        SubmitQueue(filename=args["file"], queueSystem=args["queue_system"], queueArgs=args["queue_arguments"], pattern=args["folder_search"], search=args["done_search"] )

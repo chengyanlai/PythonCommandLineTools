@@ -22,14 +22,13 @@ class cd:
     def __exit__(self, etype, value, traceback):
         os.chdir(self.savedPath)
 
-def ReplaceText(filename, textToSearch, textToReplace):
-    for root, dirs, files in os.walk('.'):
-        for file in files:
-            if file == filename:
-               fileToSearch = os.path.join(root, file)
-               with fileinput.FileInput(fileToSearch, inplace=True, backup='.bak') as currentFile:
-                   for line in currentFile:
-                       print(line.replace(textToSearch, textToReplace), end='')
+def ReplaceText(filename, textToSearch, textToReplace, pattern=""):
+    folder_list = getFolders(pattern)
+    for folder in folder_list:
+        fileToSearch = os.path.join(folder, filename)
+        with fileinput.FileInput(fileToSearch, inplace=True, backup='.bak') as currentFile:
+            for line in currentFile:
+                print(line.replace(textToSearch, textToReplace), end='')
 
 def getQueueing(queueSystem="torque"):
     queue = []
@@ -127,6 +126,6 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--file', default='job', help='It is either the job script to submit or the file to search and replace text.')
     args = vars(parser.parse_args())
     if args["action"] == "rt":
-        ReplaceText(filename=args["file"], textToSearch=args["search"], textToReplace=args["replace"])
+        ReplaceText(filename=args["file"], textToSearch=args["search"], textToReplace=args["replace"], pattern=args["folder_search"])
     elif args["action"] == "sj":
         SubmitQueue(filename=args["file"], queueSystem=args["queue_system"], queueArgs=args["queue_arguments"], pattern=args["folder_search"], search=args["done_search"] )

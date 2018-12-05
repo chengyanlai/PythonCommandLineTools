@@ -69,16 +69,24 @@ class H5Modify(cmd.Cmd):
       self.file.create_dataset(self.name, data=val, dtype=l[2])
       print("Dataset -", self.name, "is", val)
 
-  def do_copy(self, file, prefix, LoopFrom=0, LoopTo=0, Step=0):
+  def do_copy(self, s):
     """ copy [filename] [set/group prefix] [loop_from=0] [loop_to=0] [step=0]
     Copy dataset(s)/group(s) to file. """
+    l = s.split()
+    file = str(l[0])
+    prefix = str(l[1])
     FileToWrite = h5py.File(file, 'w')
-    if LoopFrom == LoopTo:
+    if len(l) == 2:
       self.file.copy(prefix, FileToWrite)
-    else:
+    elif len(l) == 5:
+      LoopFrom = np.int(l[2])
+      LoopTo = np.int(l[3])
+      Step = np.int(l[4])
       for i in range(LoopFrom, LoopTo, Step):
         gname = prefix + str(i)
+        print("Copy " + gname, end="...\t")
         self.file.copy(gname, FileToWrite)
+        print("DONE!")
     FileToWrite.close()
 
   def do_eof(self, line):

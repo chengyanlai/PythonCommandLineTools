@@ -75,7 +75,7 @@ class H5Modify(cmd.Cmd):
     l = s.split()
     file = str(l[0])
     prefix = str(l[1])
-    FileToWrite = h5py.File(file, 'w')
+    FileToWrite = h5py.File(file, 'a')
     if len(l) == 2:
       self.file.copy(prefix, FileToWrite)
     elif len(l) == 5:
